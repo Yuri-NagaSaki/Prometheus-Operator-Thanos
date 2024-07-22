@@ -1,0 +1,70 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: prometheus
+  namespace: monitoring
+spec:
+  ingressClassName: nginx
+  rules:
+  - host: t1.prometheus.huisebug.org
+    http:
+      paths:
+      - pathType: Prefix
+        path: /
+        backend:
+          service:
+            name: prometheus-k8s
+            port:
+              number: 9090
+
+  - host: t1.alertmanager.huisebug.org
+    http:
+      paths:
+      - pathType: Prefix
+        path: /
+        backend:
+          service:
+            name: alertmanager-main
+            port:
+              number: 9093
+
+  - host: thanos-query.huisebug.org
+    http:
+      paths:
+      - pathType: Prefix
+        path: /
+        backend:
+          service:
+            name: thanos-query
+            port:
+              number: 9090
+  - host: thanos-compactor.huisebug.org
+    http:
+      paths:
+      - pathType: Prefix
+        path: /
+        backend:
+          service:
+            name: thanos-compactor
+            port:
+              number: 10902
+  - host: thanos-query-frontend.huisebug.org
+    http:
+      paths:
+      - pathType: Prefix
+        path: /
+        backend:
+          service:
+            name: thanos-query-frontend
+            port:
+              number: 9090
+  - host: thanos-ruler.huisebug.org
+    http:
+      paths:
+      - pathType: Prefix
+        path: /
+        backend:
+          service:
+            name: thanos-ruler-operated
+            port:
+              number: 10902

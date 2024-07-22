@@ -1,0 +1,63 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: thanos-compactor
+  namespace: monitoring
+  labels:
+    app: thanos-compactor
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: thanos-compactor
+  serviceName: thanos-compactor
+  template:
+    metadata:
+      labels:
+        app: thanos-compactor
+    spec:
+      containers:
+        - name: thanos-compactor
+          image: quay.io/thanos/thanos:v0.31.0
+          args:
+            - "compact"
+            - "--log.level=debug"
+            - "--data-dir=/data"
+            - --objstore.config=$(OBJSTORE_CONFIG)
+            - "--wait"
+          ports:
+            - name: http
+              containerPort: 10902
+          env:
+          - name: OBJSTORE_CONFIG
+            valueFrom:
+              secretKeyRef:
+                key: objectstorage.yaml
+                name: thanos-objectstorage              
+          livenessProbe:
+            httpGet:
+              port: 10902
+              path: /-/healthy
+            initialDelaySeconds: 10
+          readinessProbe:
+            httpGet:
+              port: 10902
+              path: /-/ready
+            initialDelaySeconds: 15
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: thanos-compactor
+  namespace: monitoring
+  labels:
+    app: thanos-compactor
+spec:
+  ports:
+    - port: 10902
+      targetPort: http
+      name: http
+  selector:
+    app: thanos-compactor
+

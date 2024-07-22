@@ -1,0 +1,25 @@
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  labels:
+    app.kubernetes.io/name: record-rules
+    prometheus: k8s
+    role: record-rules
+  name: record-rules
+  namespace: monitoring
+spec:
+  groups:
+  - name: k8s.rules
+    rules:
+    - expr: |
+        sum(rate(container_cpu_usage_seconds_total{job="kubelet"}[5m])) by (namespace)
+      record: namespace:container_cpu_usage_seconds_total:sum_rate
+    - expr: |
+        sum(container_memory_usage_bytes{job="kubelet"}) by (namespace)
+      record: namespace:container_memory_usage_bytes:sum
+    - expr: |
+        sum by (namespace, pod, container) (
+          rate(container_cpu_usage_seconds_total{job="kubelet"}[5m])
+        )
+      record: namespace_pod_container:container_cpu_usage_seconds_total:sum_rate
+

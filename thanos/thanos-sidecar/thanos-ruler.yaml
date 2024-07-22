@@ -1,0 +1,36 @@
+apiVersion: monitoring.coreos.com/v1
+kind: ThanosRuler
+metadata:
+  labels:
+    app.kubernetes.io/name: thanos-ruler
+  name: k8s
+  namespace: monitoring
+spec:
+  image: quay.io/thanos/thanos:v0.31.0
+  replicas: 1
+  queryEndpoints:
+  - dnssrv+_http._tcp.thanos-query.monitoring.svc.cluster.local
+  ruleSelector: 
+    matchLabels:
+      role: record-rules
+
+  alertmanagersConfig:
+      key: config.yaml
+      name: thanosruler-alertmanagersconfig
+   
+
+  objectStorageConfig:
+    key: objectstorage.yaml
+    name: thanos-objectstorage       
+  storage:
+    volumeClaimTemplate:
+      metadata:
+        annotations:
+          volume.beta.kubernetes.io/storage-class: "nfs-storageclass"
+      spec:
+        storageClassName: nfs-storageclass
+        accessModes: [ "ReadWriteMany" ]
+        resources:
+          requests:
+            storage: 10Gi
+

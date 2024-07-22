@@ -1,0 +1,121 @@
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  labels:
+    app.kubernetes.io/name: state-rules
+    prometheus: k8s
+    role: alert-rules
+  name: alert-rules
+  namespace: monitoring
+spec:
+  groups:
+  - name: up
+    rules:
+    - alert: 已监听job状态
+      expr: up == 0
+      for: 30s
+      labels:
+        severity: critical
+      annotations:
+        message: "{{$labels.job}}服务所在实例{{$labels.instance}}关闭"
+  - name: kube_pod_container_status_waiting_reason
+    rules:
+    - alert: pod等待状态错误原因
+      expr: kube_pod_container_status_waiting_reason{reason=~"ErrImagePull|CrashLoopBackOff|ImagePullBackOff|CreateContainerError"} > 0
+      for: 30s
+      labels:
+        severity: warning
+      annotations:
+        message: "{{$labels.namespace}}.{{$labels.pod}}等待错误原因:{{$labels.reason}}"
+
+  - name: kube_pod_status_reason
+    rules:
+    - alert: pod驱逐事件
+      expr: sum(rate(kube_pod_status_reason{reason="Evicted"}[1m])) by (pod) 
+      for: 30s
+      labels:
+        severity: critical
+      annotations:
+        message: "{{$labels.namespace}}.{{$labels.pod}}发生Evicted驱逐事件"
+
+  - name: kube_pod_container_status_last_terminated_reason
+    rules:
+    - alert: pod最后终止原因
+      expr: kube_pod_container_status_last_terminated_reason{reason!="OOMKilled"} > 0
+      for: 30s
+      labels:
+        severity: warning
+      annotations:
+        message: "{{$labels.namespace}}.{{$labels.pod}}最后终止原因:{{$labels.reason}}"
+
+
+  - name: kube_pod_container_status_last_terminated_reason_mem
+    rules:
+    - alert: pod容器内存不足被kill
+      expr: kube_pod_container_status_last_terminated_reason{reason="OOMKilled"} > 0
+      for: 30s
+      labels:
+        severity: warning
+      annotations:
+        message: "{{$labels.namespace}}.{{$labels.pod}}容器内存不足"
+
+  - name: Pod_CPU_threshold
+    rules:
+    - alert: pod容器CPU资源使用达到报警阈值
+      expr: sum(rate(container_cpu_usage_seconds_total{namespace=~"default|huisebug"}[1m])) by (namespace,pod)  /  sum(kube_pod_container_resource_limits{namespace=~"default|huisebug",resource="cpu"}) by (namespace,pod) > 0.9
+      for: 30s
+      labels:
+        severity: warning
+    
+      annotations:
+        message: "{{$labels.namespace}}.{{$labels.pod}}使用率报警阈值,当前使用率为: {{$value}}"
+
+  - name: Pod_Memory_threshold
+    rules:
+    - alert: pod容器内存资源使用达到报警阈值
+      expr: sum(container_memory_usage_bytes) by (namespace,pod)  /  sum(kube_pod_container_resource_limits{namespace=~"default|huisebug",resource="memory"}) by (namespace,pod) > 0.9
+      for: 30s
+      labels:
+        severity: warning
+      annotations:
+        message: "{{$labels.namespace}}.{{$labels.pod}}使用率报警阈值,当前使用率为: {{$value}}"
+
+  - name: 网站嗅探
+    rules:
+    - alert: 网站嗅探
+      expr: probe_success{job="probe"} != 1
+      for: 30s
+      labels:
+        severity: critical
+      annotations:
+        message: "网站{{$labels.instance}}非http_2xx状态"
+
+  - name: k8s-node节点CPU使用率
+    rules:
+    - alert: k8s-node节点CPU使用率
+      expr: (1 - avg(irate(node_cpu_seconds_total{mode="idle"}[5m])) by (instance)) * 100 > 95
+      for: 30s
+      labels:
+        severity: warning
+      annotations:
+        message: "{{$labels.instance}}: Node节点CPU使用率超过95%"
+
+  - name: k8s-node节点内存使用率
+    rules:
+    - alert: k8s-node节点内存使用率
+      expr: 100 * (1 - sum(node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes) by (instance) ) > 85
+      for: 30s
+      labels:
+        severity: warning
+      annotations:
+        message: "{{$labels.instance}} 当前内存使用率为: {{$value}}"
+
+  - name: k8s-node节点各挂载点磁盘使用率
+    rules:
+    - alert: k8s-node节点各挂载点磁盘使用率
+      expr: 100 * (1 - sum(node_filesystem_avail_bytes{}/node_filesystem_size_bytes{}) by (instance,device,mountpoint)) > 95
+      for: 30s
+      labels:
+        severity: warning
+      annotations:
+        message: "磁盘{{$labels.device}} 挂载点{{$labels.mountpoint}} 当前使用率为: {{$value}}"

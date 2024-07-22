@@ -1,0 +1,84 @@
+apiVersion: monitoring.coreos.com/v1
+kind: Prometheus
+metadata:
+  labels:
+    app.kubernetes.io/component: prometheus
+    app.kubernetes.io/instance: k8s
+    app.kubernetes.io/name: prometheus
+    app.kubernetes.io/part-of: kube-prometheus
+    app.kubernetes.io/version: 2.44.0
+  name: k8s
+  namespace: monitoring
+spec:
+  alerting:
+    alertmanagers:
+    - apiVersion: v2
+      name: alertmanager-main
+      namespace: monitoring
+      port: web
+  enableFeatures: []
+  externalLabels: {}
+  image: quay.io/prometheus/prometheus:v2.44.0
+  nodeSelector:
+    kubernetes.io/os: linux
+  podMetadata:
+    labels:
+      app.kubernetes.io/component: prometheus
+      app.kubernetes.io/instance: k8s
+      app.kubernetes.io/name: prometheus
+      app.kubernetes.io/part-of: kube-prometheus
+      app.kubernetes.io/version: 2.44.0
+  podMonitorNamespaceSelector: {}
+  podMonitorSelector: {}
+  probeNamespaceSelector: {}
+  probeSelector: {}
+  replicas: 1
+  resources:
+    requests:
+      memory: 400Mi
+  ruleNamespaceSelector: {}
+  
+  ruleSelector: 
+    matchLabels:
+      role: alert-rules
+
+  serviceAccountName: prometheus-k8s
+  serviceMonitorNamespaceSelector: {}
+  serviceMonitorSelector: {}
+  version: 2.44.0
+  logLevel: info
+  volumes: 
+  - name: localtime
+    hostPath:
+      path: /etc/localtime
+  volumeMounts:
+  - mountPath: "/etc/localtime"
+    name: localtime
+  retention: 10d
+
+  storage:
+    volumeClaimTemplate:
+      metadata:
+        annotations:
+          volume.beta.kubernetes.io/storage-class: "nfs-storageclass"
+      spec:
+        storageClassName: nfs-storageclass
+        accessModes: [ "ReadWriteMany" ]
+        resources:
+          requests:
+            storage: 10Gi
+
+  externalLabels:
+    cluster: test      
+
+  # remoteWrite:
+  #   - url: http://thanos-receive-router.monitoring:19291/api/v1/receive
+  #     name: test
+  #     remoteTimeout: 10s
+
+      
+  thanos:
+    image: quay.io/thanos/thanos:v0.31.0
+    objectStorageConfig:
+      key: objectstorage.yaml
+      name: thanos-objectstorage        

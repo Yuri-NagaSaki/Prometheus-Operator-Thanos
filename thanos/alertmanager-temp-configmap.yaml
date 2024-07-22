@@ -1,0 +1,33 @@
+apiVersion: v1
+data:
+  temp.yaml: |
+    {{- define "__text_alert_list" -}}
+    {{- range .Alerts.Firing -}}
+    错误告警:
+    告警消息: {{ .Annotations.message }}
+    告警级别: {{ .Labels.severity }}
+    告警alert: {{ .Labels.alertname }}
+    触发时间: {{ (.StartsAt.Add 28800e9).Format "2006-01-02 15:04:05" }}
+    {{ end }}   
+    {{- range .Alerts.Resolved -}}
+    服务已恢复:
+    原告警消息: {{ .Annotations.message }}
+    恢复时间: {{ (.EndsAt.Add 28800e9).Format "2006-01-02 15:04:05" }}
+    {{ end }}
+    {{- end }}
+
+    {{- define "wechat.default.message" -}}
+    {{- if gt (len .Alerts.Firing) 0 -}}
+    {{ template "__text_alert_list" . }}
+    {{- end }}
+    {{- if gt (len .Alerts.Resolved) 0 -}}
+    {{ template "__text_alert_list" . }}
+    {{- end }}
+    {{- end }}
+kind: ConfigMap
+metadata:
+  name: alertmanager-temp
+  namespace: monitoring
+
+
+
