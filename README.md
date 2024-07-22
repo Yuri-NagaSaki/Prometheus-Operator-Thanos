@@ -20,3 +20,16 @@ Components included in this package:
 * [kube-state-metrics](https://github.com/kubernetes/kube-state-metrics)
 * [Grafana](https://grafana.com/)
 * [Thanos](https://github.com/thanos-io/thanos)
+* [PrometheusAlert](https://github.com/feiyu563/PrometheusAlert)
+
+
+This stack is meant for cluster monitoring, so it is pre-configured to collect metrics from all Kubernetes components. In addition to that, it delivers a default set of dashboards and alerting rules. The newly added Thanos provides high availability for Prometheus, ensuring robust and reliable monitoring. In multi-Kubernetes cluster setups, Prometheus writes monitoring data to the Thanos store gateway, while the Thanos query gateway allows reading and querying data from the Thanos store gateway. This integration provides Prometheus with scalability and resilience in terms of persistent storage and cross-cluster querying.
+
+## Thanos Basic Components Introduction
+
+- **Query**: Implements the Prometheus API, providing a consistent query interface with Prometheus.
+- **Sidecar**: Connects to Prometheus, provides a query interface, and can also report data.
+- **Store Gateway**: Accesses metric data stored in object storage.
+- **Compact**: Compresses samples and cleans up data in object storage.
+- **Receive**: Receives data from Prometheus Remote Write.
+- **Ruler**: Configures and manages alerting rules.
