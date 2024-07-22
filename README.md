@@ -4,7 +4,7 @@
 
 > Note that everything is experimental and may change significantly at any time.
 
-This repository is developed based on the [kube-prometheus](https://github.com/prometheus-operator/kube-prometheus) project. It extends the original model by adding NodeExporter and Kubernetes Pod Prometheus rules. 
+This repository is developed based on the [kube-prometheus](https://github.com/prometheus-operator/kube-prometheus) project. It extends the original project by adding NodeExporter and Kubernetes Pod Prometheus rules. 
 Additionally, it introduces two Thanos architecture modes, thanos-sidecar and thanos-receive, to enhance Prometheus high availability.
 
 The content of this project is written in [Yuri-NagaSaki](https://github.com/Yuri-NagaSaki). This project could both be described as a package as well as a library.
